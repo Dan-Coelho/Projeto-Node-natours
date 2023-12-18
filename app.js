@@ -6,9 +6,13 @@ const { dirname } = require('path');
 const app = express();
 //1-MIDDLEWARES
 //Middleware morgan
-app.use(morgan('tiny'));
+console.log(process.env.NODE_ENV);
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+}
 //Criação de middleware do express
 app.use(express.json());
+app.use(express.static(`${__dirname}/public`));
 //Definindo nosso middleware
 app.use((req, res, next) => {
   console.log('-----------');
