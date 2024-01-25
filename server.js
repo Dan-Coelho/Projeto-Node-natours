@@ -8,7 +8,7 @@ process.on('uncaughtException', (err) => {
   process.exit(1);
 });
 
-dotenv.config({ path: './config.env' });
+dotenv.config({ path: './configOne.env' });
 const app = require('./app');
 
 const db = process.env.DATABASE.replace(
