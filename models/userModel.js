@@ -63,6 +63,7 @@ userSchema.pre('save', async function (next) {
   this.passwordChangedAt = Date.now() - 1000;
   next();
 });
+
 //Não mostrar usuário deletado da consulta de usuários
 userSchema.pre(/^find/, function (next) {
   //this points to the current query
