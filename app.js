@@ -6,11 +6,13 @@ const helmet = require('helmet');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
+const cookieParser = require('cookie-parser');
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 const reviewRouter = require('./routes/reviewRoutes');
+const viewRouter = require('./routes/viewRoutes');
 
 const app = express();
 
@@ -20,7 +22,44 @@ app.set('views', path.join(__dirname, 'views'));
 //Serving static files
 app.use(express.static(path.join(__dirname, 'public')));
 //Set security http headers
-app.use(helmet());
+// Further HELMET configuration for Security Policy (CSP)
+const scriptSrcUrls = [
+  'https://unpkg.com/',
+  'https://tile.openstreetmap.org',
+  'https://js.stripe.com',
+  'https://m.stripe.network',
+  'https://*.cloudflare.com',
+];
+const styleSrcUrls = [
+  'https://unpkg.com/',
+  'https://tile.openstreetmap.org',
+  'https://fonts.googleapis.com/',
+];
+const connectSrcUrls = [
+  'https://unpkg.com',
+  'https://tile.openstreetmap.org',
+  'ws://localhost:*/',
+];
+const fontSrcUrls = ['fonts.googleapis.com', 'fonts.gstatic.com'];
+
+app.use(
+  helmet.contentSecurityPolicy({
+    crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+    crossOriginResourcePolicy: { policy: 'same-site' },
+    useDefaults: true,
+    directives: {
+      defaultSrc: [],
+      connectSrc: ["'self'", ...connectSrcUrls],
+      scriptSrc: ["'self'", ...scriptSrcUrls],
+      styleSrc: ["'self'", "'unsafe-inline'", ...styleSrcUrls],
+      workerSrc: ["'self'", 'blob:'],
+      objectSrc: [],
+      imgSrc: ["'self'", 'blob:', 'data:', 'https:'],
+      fontSrc: ["'self'", ...fontSrcUrls],
+    },
+  }),
+);
+
 //Development loggin //Middleware morgan
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
@@ -35,7 +74,8 @@ app.use('/api', limiter);
 //Criação de middleware do express
 //Body parser - reading data from body into req.body
 app.use(express.json({ limit: '10kb' }));
-
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+app.use(cookieParser());
 //Data sanitization against noSQL query injection
 app.use(mongoSanitize());
 //Data sanitization against XSS.
@@ -64,14 +104,13 @@ app.use(
 //test middleware
 app.use((req, res, next) => {
   req.requestTime = new Date().toISOString();
+  console.log(req.cookies);
   next();
 });
 
 //3 ROUTES
 //MOUTING ROUTERS
-app.get('/', (req, res) => {
-  res.status(200).render('base');
-});
+app.use('/', viewRouter);
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/reviews', reviewRouter);
