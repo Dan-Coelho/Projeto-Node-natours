@@ -7,11 +7,13 @@ const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
 const cookieParser = require('cookie-parser');
+const compression = require('compression');
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 const reviewRouter = require('./routes/reviewRoutes');
+const bookingRouter = require('./routes/bookingRoutes');
 const viewRouter = require('./routes/viewRoutes');
 
 const app = express();
@@ -23,12 +25,14 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 //Set security http headers
 // Further HELMET configuration for Security Policy (CSP)
+/*
 const scriptSrcUrls = [
   'https://unpkg.com/',
   'https://tile.openstreetmap.org',
   'https://js.stripe.com',
   'https://m.stripe.network',
   'https://*.cloudflare.com',
+  'https://js.stripe.com/v3/',
 ];
 const styleSrcUrls = [
   'https://unpkg.com/',
@@ -38,8 +42,9 @@ const styleSrcUrls = [
 const connectSrcUrls = [
   'https://unpkg.com',
   'https://tile.openstreetmap.org',
-  'ws://localhost:*/',
+  'ws://localhost:',
 ];
+
 const fontSrcUrls = ['fonts.googleapis.com', 'fonts.gstatic.com'];
 
 app.use(
@@ -48,6 +53,7 @@ app.use(
     crossOriginResourcePolicy: { policy: 'same-site' },
     useDefaults: true,
     directives: {
+      //...helmet.contentSecurityPolicy.getDefaultDirectives(),
       defaultSrc: [],
       connectSrc: ["'self'", ...connectSrcUrls],
       scriptSrc: ["'self'", ...scriptSrcUrls],
@@ -56,6 +62,57 @@ app.use(
       objectSrc: [],
       imgSrc: ["'self'", 'blob:', 'data:', 'https:'],
       fontSrc: ["'self'", ...fontSrcUrls],
+      frameSrc: ['https://js.stripe.com/v3/'],
+    },
+  }),
+);
+*/
+
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'", 'data:', 'blob:', 'https:', 'ws:'],
+        baseUri: ["'self'"],
+        fontSrc: ["'self'", 'https:', 'data:'],
+        scriptSrc: [
+          "'self'",
+          'https:',
+          'http:',
+          'blob:',
+          'https://*.mapbox.com',
+          'https://js.stripe.com',
+          'https://m.stripe.network',
+          'https://*.cloudflare.com',
+        ],
+        frameSrc: ["'self'", 'https://js.stripe.com'],
+        objectSrc: ["'none'"],
+        styleSrc: ["'self'", 'https:', "'unsafe-inline'"],
+        workerSrc: [
+          "'self'",
+          'data:',
+          'blob:',
+          'https://*.tiles.mapbox.com',
+          'https://api.mapbox.com',
+          'https://events.mapbox.com',
+          'https://m.stripe.network',
+        ],
+        childSrc: ["'self'", 'blob:'],
+        imgSrc: ["'self'", 'blob:', 'data:', 'https:'],
+        formAction: ["'self'"],
+        connectSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          'data:',
+          'blob:',
+          'https://*.stripe.com',
+          'https://*.mapbox.com',
+          'https://*.cloudflare.com/',
+          'https://bundle.js:*',
+          'ws://127.0.0.1:*/',
+        ],
+        upgradeInsecureRequests: [],
+      },
     },
   }),
 );
@@ -113,6 +170,7 @@ app.use('/', viewRouter);
 app.use('/api/v1/tours', tourRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/reviews', reviewRouter);
+app.use('/api/v1/bookings', bookingRouter);
 
 //route for paths which don't exist
 app.all('*', (req, res, next) => {
