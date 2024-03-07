@@ -157,9 +157,9 @@ tourSchema.pre(/^find/, function (next) {
   });
   next();
 });
-tourSchema.post(/^find/, function (next) {
+/* tourSchema.post(/^find/, function (next) {
   console.log(`query took ${Date.now() - this.start} milliseconds`);
-});
+}); */
 
 //AGREGATION MIDDLEWARE
 

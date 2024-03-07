@@ -158,6 +158,8 @@ app.use(
 //   next();
 // });
 
+app.use(compression());
+
 //test middleware
 app.use((req, res, next) => {
   req.requestTime = new Date().toISOString();

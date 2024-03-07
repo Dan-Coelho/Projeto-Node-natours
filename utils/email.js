@@ -24,8 +24,7 @@ module.exports = class Email {
       */
       return nodemailer.createTransport(
         new Transport({
-          apiKey:
-            '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',
+          apiKey: process.env.BREVO_API,
         }),
       );
     }
